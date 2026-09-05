@@ -1,0 +1,68 @@
+name: Publish Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Extension Bundle
+        run: npm run build
+
+      - name: Publish to Flint Registry
+        env:
+          REGISTRY_API_URL: ${{ vars.FLINT_REGISTRY_URL || 'https://api.flintnotes.com/api/v1/plugins/publish' }}
+          PUBLISH_TOKEN: ${{ secrets.FLINT_PUBLISH_TOKEN }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const manifest = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+            const bundleCode = fs.readFileSync("dist/main.js", "utf8");
+            const stylesCode = fs.existsSync("dist/styles.css") ? fs.readFileSync("dist/styles.css", "utf8") : undefined;
+            const readme = fs.existsSync("README.md") ? fs.readFileSync("README.md", "utf8") : "# " + manifest.name;
+
+            const payload = {
+              manifest,
+              bundleCode,
+              stylesCode,
+              readme,
+              author: {
+                githubUsername: process.env.GITHUB_ACTOR || manifest.author,
+                displayName: manifest.author
+              }
+            };
+
+            fetch(process.env.REGISTRY_API_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(process.env.PUBLISH_TOKEN ? { "Authorization": "Bearer " + process.env.PUBLISH_TOKEN } : {})
+              },
+              body: JSON.stringify(payload)
+            }).then(async (res) => {
+              const body = await res.json();
+              if (!res.ok) {
+                console.error("Publish failed:", res.status, body);
+                process.exit(1);
+              }
+              console.log("Published successfully:", body);
+            }).catch((err) => {
+              console.error("Network error during publishing:", err);
+              process.exit(1);
+            });
+          '
