@@ -1,9 +1,9 @@
 {
-  "id": "flint-sample-extension",
+  "id": "noether-sample-extension",
   "name": "Sample Extension",
-  "version": "1.0.0",
-  "description": "A sample community extension for Flint demonstrating commands, setting tabs, and MCP tools.",
-  "author": "Your Name",
+  "version": "1.1.0",
+  "description": "A sample community extension for Noether demonstrating commands, omnibox search, tab context actions, decorators, and MCP tools.",
+  "author": "Community Developer",
   "minAppVersion": "0.4.0",
   "category": "Productivity",
   "tags": [
@@ -11,5 +11,13 @@
     "starter",
     "demo"
   ],
-  "icon": "sparkles"
+  "icon": {
+    "name": "sparkles",
+    "type": "gradient",
+    "gradientColors": [
+      "#6366f1",
+      "#4338ca"
+    ],
+    "gradientDirection": "135deg"
+  }
 }
